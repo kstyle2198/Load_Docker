@@ -1,23 +1,41 @@
 services:
-
-  ollama:
-    build: ollama
-    ports: 
-      - 11434:11434
-    volumes:
-      - tutorial-vol:/ollama
-    entrypoint: ["usr/bin/bash", "/pull-ollama.sh"]
-
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.1
+    build:
+      context: ./elastic
+      dockerfile: Dockerfile
+    container_name: elasticsearch
     ports:
       - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - xpack.security.http.ssl.enabled=false
 
+  postgres:
+    build:
+      context: ./postgres
+      dockerfile: Dockerfile
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_DB=mydb
+
+  ollama:
+    build: ollama
+    ports:
+      - 11434:11434
+    volumes:
+      - tutorial-vol:/ollama
+    entrypoint: [ "/usr/bin/bash", "/pull-ollama.sh" ]
+
 volumes:
+  es_data:
+  pg_data:
   tutorial-vol:
-    driver: local
-  

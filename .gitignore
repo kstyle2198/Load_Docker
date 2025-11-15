@@ -2,3 +2,4 @@ data/
 docs/
 .venv
 *.log
+test/

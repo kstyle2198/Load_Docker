@@ -28,14 +28,49 @@ services:
       - POSTGRES_DB=mydb
 
   ollama:
-    build: ollama
+    build: 
+      context: ./ollama
+      dockerfile: Dockerfile
     ports:
       - 11434:11434
     volumes:
       - tutorial-vol:/ollama
     entrypoint: [ "/usr/bin/bash", "/pull-ollama.sh" ]
 
+  redis:
+    build:
+      context: ./redis
+      dockerfile: Dockerfile
+    container_name: prod_redis
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis-data:/data
+    networks:
+      - prod-network
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: prod_worker
+    env_file:
+      - ./.env.prod
+    networks:
+      # [개선 ③]
+      - prod-network
+    restart: unless-stopped
+    depends_on:
+      - redis # 워커는 redis에만 의존합니다.
+
 volumes:
   es_data:
   pg_data:
   tutorial-vol:
+  redis-data:
+
+# [개선 ③] 네트워크 정의
+networks:
+  prod-network:
+    driver: bridge

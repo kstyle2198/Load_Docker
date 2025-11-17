@@ -1,76 +1,95 @@
 services:
+
   elasticsearch:
     build:
       context: ./elastic
       dockerfile: Dockerfile
-    container_name: elasticsearch
+    container_name: svc_elasticsearch
     ports:
       - "9200:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
     environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
-      - xpack.security.http.ssl.enabled=false
+      discovery.type: "single-node"
+      xpack.security.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+    networks:
+      - prod-network
+    restart: unless-stopped
 
   postgres:
     build:
       context: ./postgres
       dockerfile: Dockerfile
-    container_name: postgres
+    container_name: svc_postgres
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin123
-      - POSTGRES_DB=mydb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: mydb
+    networks:
+      - prod-network
+    restart: unless-stopped
+
+  mariadb:
+    build:
+      context: ./maria
+      dockerfile: Dockerfile
+    container_name: svc_maria
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: maria_db
+      MARIADB_USER: admin
+      MARIADB_PASSWORD: admin123
+      TZ: Asia/Seoul
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - prod-network
 
   ollama:
     build: 
       context: ./ollama
       dockerfile: Dockerfile
+    container_name: svc_ollama
     ports:
-      - 11434:11434
+      - "11434:11434"
     volumes:
       - tutorial-vol:/ollama
-    entrypoint: [ "/usr/bin/bash", "/pull-ollama.sh" ]
+    entrypoint: ["/usr/bin/bash", "/pull-ollama.sh"]
+    networks:
+      - prod-network
+    restart: unless-stopped
 
   redis:
     build:
       context: ./redis
       dockerfile: Dockerfile
-    container_name: prod_redis
-    image: redis:7-alpine
+    container_name: svc_redis
     command: redis-server --save 60 1 --loglevel warning
+    ports:
+      - "6379:6379"
     volumes:
       - redis-data:/data
     networks:
       - prod-network
     restart: unless-stopped
 
-  worker:
-    build:
-      context: ./worker
-      dockerfile: Dockerfile
-    container_name: prod_worker
-    env_file:
-      - ./.env.prod
-    networks:
-      # [개선 ③]
-      - prod-network
-    restart: unless-stopped
-    depends_on:
-      - redis # 워커는 redis에만 의존합니다.
 
 volumes:
   es_data:
   pg_data:
+  mariadb_data:
   tutorial-vol:
   redis-data:
 
-# [개선 ③] 네트워크 정의
 networks:
   prod-network:
     driver: bridge

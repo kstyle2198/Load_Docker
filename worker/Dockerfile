@@ -35,7 +35,7 @@ ENV CELERY_WORKER_LOGLEVEL=info
 
 
 # Celery 워커 실행 (병렬처리 최적화)
-CMD ["sh", "-c", "celery -A app.worker.celery_app worker --loglevel=${CELERY_WORKER_LOGLEVEL} --concurrency=${CELERY_WORKER_CONCURRENCY} -P ${CELERY_WORKER_POOL} --max-tasks-per-child=${CELERY_WORKER_MAX_TASKS_PER_CHILD}", "-P", "eventlet"]
+CMD ["sh", "-c", "celery -A app.worker.celery_app worker --loglevel=${CELERY_WORKER_LOGLEVEL} --uid=nobody --concurrency=${CELERY_WORKER_CONCURRENCY} -P ${CELERY_WORKER_POOL} --max-tasks-per-child=${CELERY_WORKER_MAX_TASKS_PER_CHILD}", "-P", "eventlet"]
 
 # Celery 워커 실행
 # CMD ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=info", "-P", "eventlet"]

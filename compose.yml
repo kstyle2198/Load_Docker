@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
 
   kibana:
-    image: docker.elastic.co/kibana/kibana:8.11.1
+    image: docker.elastic.co/kibana/kibana:9.0.0
     container_name: svc_kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://svc_elasticsearch:9200
